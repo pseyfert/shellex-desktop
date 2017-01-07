@@ -1,0 +1,32 @@
+# vim:ft=zsh
+# Handle command execution
+# © 2017 Paul Seyfert and contributors (see also: LICENSE)
+
+zmodload zsh/regex
+function shellex_preexec () {
+    # In $1 the command-line is given
+    # In $3 the command-line with expanded aliases and function-bodies is given
+
+    # Execute the tempfile, then exit
+    zsh -c $3 > /dev/null 2>&1 & disown
+
+    exit
+}
+
+# We use preexec_functions, so that the user can decide to overwrite our choice
+# or ammend it by own functions
+preexec_functions=(shellex_preexec)
+
+# preexec doesn't get executed on empty lines, so employ zle to exit on empty lines
+# https://www.reddit.com/r/zsh/comments/s6t6d/is_there_an_alias_for_an_empty_line/
+# also remove placeholder "gtk-launch=" and insert "gtk-launch " instead
+function empty-buffer-to-exit() {
+    if [[ $#BUFFER == 0 ]]; then
+        BUFFER="exit"
+    fi
+    if [[ $BUFFER == gtk-launch=* ]]; then
+        BUFFER=${BUFFER/gtk-launch=/gtk-launch }
+    fi
+}
+# set special widget, see man zshzle
+zle -N zle-line-finish empty-buffer-to-exit

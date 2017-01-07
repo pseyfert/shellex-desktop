@@ -1,0 +1,43 @@
+# vim:ft=zsh
+# Configure tab completion and make zsh suggest .desktop files
+# © 2017 Paul Seyfert and contributors (see also: LICENSE)
+
+_desk() {
+  local -a apps
+  apps=()
+  for app in /usr/share/applications/*.desktop(:s/.desktop//:s#/usr/share/applications/##)
+  do
+    apps+=($app)
+  done
+  _wanted commands expl "desktop files" compadd -P "gtk-launch=" "$apps[@]"
+}
+
+_run() {
+  local -a alts
+  alts=()
+  alts+=('desk:desktop files:_desk')
+  alts+=('cmd:regular commands:_command_names')
+  _alternative "$alts[@]"
+}
+
+autoload -Uz compinit
+compinit
+
+_normal "" &> /dev/null || true
+eval "$(declare -f _normal | sed '1s/.*/original&/')"
+
+_normal() {
+  if [[ $CURRENT == 1 ]] ; then _run ; else original_normal ; fi
+  # TODO restore original_normal to normal after the first argument is done
+  # (in normal shell mode we don't want other completion functions to call
+  # our _normal instead of the original
+}
+
+setopt +o bashautolist
+setopt +o listambiguous
+setopt +o autolist
+
+zstyle ':completion:*:default' menu select=0
+zstyle ':completion:*:default' compstate last_prompt=1
+zstyle ':completion:*:default' select-scroll 0
+
