@@ -5,11 +5,20 @@
 _desk() {
   local -a apps
   apps=()
+  # collect .desktop files
   for app in /usr/share/applications/*.desktop(:s/.desktop//:s#/usr/share/applications/##)
   do
     apps+=($app)
   done
+  # -P adds a prefix to all words.
+  # a) user types "Thunar<Tab>" and gets "gtk-launch=Thunar"
+  # b) user types "gtk-<TAB>" and gets "gtk-launch="
+  #
+  # the actual command should be 'gtk-launch Thunar' for .desktop files
+  # but the whitespace would be a problem for completion.
+  # Catch that later in zle
   _wanted commands expl "desktop files" compadd -P "gtk-launch=" "$apps[@]"
+  # TODO suggest "Name=" fields from .desktop files instead of .desktop file name
 }
 
 _run() {
@@ -23,9 +32,14 @@ _run() {
 autoload -Uz compinit
 compinit
 
+# force loading of _normal
 _normal "" &> /dev/null || true
+
+# store _normal in original_normal
+# http://stackoverflow.com/questions/16774538/override-a-shell-function-keep-a-reference-to-the-original-one
 eval "$(declare -f _normal | sed '1s/.*/original&/')"
 
+# define a new top-level completion
 _normal() {
   if [[ $CURRENT == 1 ]] ; then _run ; else original_normal ; fi
   # TODO restore original_normal to normal after the first argument is done
