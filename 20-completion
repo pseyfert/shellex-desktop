@@ -33,11 +33,10 @@ autoload -Uz compinit
 compinit
 
 # force loading of _normal
-_normal "" &> /dev/null || true
-
+# http://unix.stackexchange.com/a/335868/150443
+autoload -Uz +X _normal
 # store _normal in original_normal
-# http://stackoverflow.com/questions/16774538/override-a-shell-function-keep-a-reference-to-the-original-one
-eval "$(declare -f _normal | sed '1s/.*/original&/')"
+functions[original_normal]=$functions[_normal]
 
 # define a new top-level completion
 _normal() {
